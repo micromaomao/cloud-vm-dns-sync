@@ -16,6 +16,14 @@ import (
 
 const USER_AGENT string = "cloud-vm-dns-sync/0"
 
+// Fetch the machine list, and for each machines, fetch its IP and PTR record
+// setting.
+//
+// The PTR record for a machine can be set in the network interface tab. It
+// should be the domain name that is supposed to point to the machine.
+//
+// Returns either an error, or a map from PTR domain name to IP addresses, or to
+// the empty string if the machine is off.
 func get_all_machines_ip(ctx context.Context) (res map[string]string, err error) {
 	creds, err := goauth.FindDefaultCredentials(ctx)
 	if err != nil {
