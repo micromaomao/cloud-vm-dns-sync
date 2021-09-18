@@ -11,8 +11,7 @@ This script does the following for each of your GCP Compute instances:
 1. Create a file named something like `cloudflare-cred.ini`, and populate it with the following:
 
 <pre>
-dns_cloudflare_email = <em style="font-weight: bold;">your email</em>
-dns_cloudflare_api_key = <em style="font-weight: bold;">your cloudflare API key</em>
+dns_cloudflare_api_token = <em style="font-weight: bold;">your cloudflare API token</em>
 </pre>
 
 2. Create a service account with the "Compute Viewer" role, and download their GCP credential to a JSON file.

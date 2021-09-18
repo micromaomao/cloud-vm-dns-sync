@@ -67,12 +67,7 @@ func get_all_machines_ip(ctx context.Context) (res map[string]string, err error)
 	return
 }
 
-type CloudflareCredentiaal = struct {
-	Email   string
-	Api_key string
-}
-
-func get_cf_credentials() (res CloudflareCredentiaal, err error) {
+func get_cf_credentials() (res string, err error) {
 	ini_path, has := os.LookupEnv("CLOUDFLARE_INI")
 	if !has {
 		err = fmt.Errorf("Need \"CLOUDFLARE_INI\" environment variable.")
@@ -94,16 +89,11 @@ func get_cf_credentials() (res CloudflareCredentiaal, err error) {
 			err = EINVALID
 			return
 		}
-		if comp[0] == "dns_cloudflare_email" {
-			res.Email = comp[1]
-		} else if comp[0] == "dns_cloudflare_api_key" {
-			res.Api_key = comp[1]
-		} else {
-			err = EINVALID
-			return
+		if strings.TrimSpace(comp[0]) == "dns_cloudflare_api_token" {
+			res = strings.TrimSpace(comp[1])
 		}
 	}
-	if res.Email == "" || res.Api_key == "" {
+	if res == "" {
 		err = EINVALID
 		return
 	}
@@ -120,11 +110,11 @@ func update(dry_run bool) (err error) {
 	if err != nil {
 		return
 	}
-	cfcreds, err := get_cf_credentials()
+	cf_token, err := get_cf_credentials()
 	if err != nil {
 		return
 	}
-	cf, err := cloudflare.New(cfcreds.Api_key, cfcreds.Email, cloudflare.UserAgent(USER_AGENT))
+	cf, err := cloudflare.NewWithAPIToken(cf_token, cloudflare.UserAgent(USER_AGENT))
 	if err != nil {
 		return
 	}
