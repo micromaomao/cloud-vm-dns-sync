@@ -101,6 +101,7 @@ func get_cf_credentials() (res string, err error) {
 }
 
 func update(dry_run bool) (err error) {
+	ctx := context.Background()
 	if dry_run {
 		fmt.Printf("Doing dry-run, no update will be applied.\n")
 	}
@@ -118,7 +119,7 @@ func update(dry_run bool) (err error) {
 	if err != nil {
 		return
 	}
-	zones, err := cf.ListZones()
+	zones, err := cf.ListZones(ctx)
 	if err != nil {
 		err = fmt.Errorf("Unable to list zones: %w", err)
 		return
@@ -136,7 +137,7 @@ func update(dry_run bool) (err error) {
 			continue
 		}
 		var existing_recs []cloudflare.DNSRecord
-		existing_recs, err = cf.DNSRecords(found_zone.ID, cloudflare.DNSRecord{Type: "A", Name: domain})
+		existing_recs, err = cf.DNSRecords(ctx, found_zone.ID, cloudflare.DNSRecord{Type: "A", Name: domain})
 		if err != nil {
 			err = fmt.Errorf("Unable to get existing record: %w", err)
 			return
@@ -162,11 +163,11 @@ func update(dry_run bool) (err error) {
 				Type:    "A",
 				Name:    domain,
 				Content: ip,
-				Proxied: false,
+				Proxied: &[]bool{false}[0],
 			}
 			if existing_ip != "" {
 				if !dry_run {
-					err = cf.UpdateDNSRecord(found_zone.ID, existing_recs[0].ID, new_rec)
+					err = cf.UpdateDNSRecord(ctx, found_zone.ID, existing_recs[0].ID, new_rec)
 					if err != nil {
 						err = fmt.Errorf("Failed to update %s: %w", domain, err)
 						return
@@ -175,7 +176,7 @@ func update(dry_run bool) (err error) {
 				fmt.Printf("%s updated from %s to %s.\n", domain, existing_ip, ip)
 			} else {
 				if !dry_run {
-					_, err = cf.CreateDNSRecord(found_zone.ID, new_rec)
+					_, err = cf.CreateDNSRecord(ctx, found_zone.ID, new_rec)
 					if err != nil {
 						err = fmt.Errorf("Failed to create %s: %w", domain, err)
 						return
@@ -185,7 +186,7 @@ func update(dry_run bool) (err error) {
 			}
 		} else {
 			if !dry_run {
-				err = cf.DeleteDNSRecord(found_zone.ID, existing_recs[0].ID)
+				err = cf.DeleteDNSRecord(ctx, found_zone.ID, existing_recs[0].ID)
 				if err != nil {
 					err = fmt.Errorf("Failed to delete %s: %w", domain, err)
 					return
